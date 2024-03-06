@@ -8,6 +8,7 @@ import sys
 import requests
 from functools import lru_cache
 from collections import OrderedDict
+import functools
 
 
 # ####################### V.1.0 ###############################
@@ -76,34 +77,77 @@ from collections import OrderedDict
 
 
 
-url= 'https://lms.ithillel.ua/groups/6580b6b1f1d84d874064f209/lessons/6580b6b2f1d84d874064f219'
-sin = 5
-def cahce_profile(max_limit=5):
-    def cahce(f):
+# url= 'https://lms.ithillel.ua/groups/6580b6b1f1d84d874064f209/lessons/6580b6b2f1d84d874064f219'
+# sin = 5
+# def cahce_profile(max_limit=5):
+#     def cahce(f):
+#         @functools.wraps(f)
+#         def cehce_wrapper(*args, **kwargs):
+#             cahce_key = (args, tuple(kwargs))
+#             if cahce_key in _cahce:
+#                 _cahce.move_to_end(cahce_key)
+#                 return _cahce[cahce_key]
+#             result = f(*args, **kwargs)
+#             if len(_cahce) >= max_limit:
+#                 _cahce.popitem(last=False)
+#             _cahce[cahce_key] = result
+#             return result
+#         return cehce_wrapper
+#
+#     _cahce = OrderedDict() ### не записуються ключ та значення!
+#     print(_cahce)
+#
+#     return cahce
+#
+# @cahce_profile()
+# def fetch_url(url,sin=None):
+#     res = requests.get(url)
+#     status_code = res.status_code
+#     content = res.content[:sin]
+#     print(f'from {url}:\tcontent>>> {content}\nfrom {url}: status_code>>> {status_code}')
+#     return url, content
+#
+# fetch_url(url, sin)
+# cache = OrderedDict()
+def cache(limit=3):
+    def wrapper(f):
         @functools.wraps(f)
-        def cehce_wrapper(*args, **kwargs):
-            cahce_key = (args, tuple(kwargs))
-            if cahce_key in _cahce:
-                _cahce.move_to_end(cahce_key)
-                return _cahce[cahce_key]
+        def cached(*args, **kwargs):
+            key = args,tuple(kwargs.items())
+            if key in _cache:
+                _cache.move_to_end(key)
+                result = _cache[key]
+                print('return content from cache:', result)
+                return result
             result = f(*args, **kwargs)
-            if len(_cahce) >= max_limit:
-                _cahce.popitem(last=False)
-            _cahce[cahce_key] = result
-            return result
-        return cehce_wrapper
+            if len(_cache) > limit:
+                _cache.popitem(last=False)
+            _cache[key]=result
+            print('\tadd content in _cache from func_url')
+            return result and print('cache content:', _cache)
+        return cached
+    _cache = OrderedDict()
+    return wrapper
 
-    _cahce = OrderedDict() ### не записуються ключ та значення!
-    print(_cahce)
 
-    return cahce
 
-@cahce_profile()
-def fetch_url(url,sin=None):
+
+@cache(limit=3)
+def func_url(url,sin=None):
     res = requests.get(url)
-    status_code = res.status_code
+    status = res.status_code
     content = res.content[:sin]
-    print(f'from {url}:\tcontent>>> {content}\nfrom {url}: status_code>>> {status_code}')
-    return url, content
+    print('\nstatus:', status,'\tfrom\t',url)
 
-fetch_url(url, sin)
+    return url,content
+# text_list=OrderedDict()
+# text_list=func_url(url,sin)
+# print(text_list)
+func_url('https://sky.pro/media/modul-requests-v-python/',5)
+func_url('https://sky.pro/media/modul-requests-v-python/',10)
+func_url("https://pythonim.ru/moduli/ordereddict-v-python",10)
+
+func_url('https://sky.pro/media/modul-requests-v-python/',5)
+func_url('https://sky.pro/media/modul-requests-v-python/',10)
+func_url("https://pythonim.ru/moduli/ordereddict-v-python",10)
+
